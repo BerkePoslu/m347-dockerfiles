@@ -1,0 +1,21 @@
+# start with a image with JDK 17
+FROM openjdk:17-jdk-slim AS build
+# maven und git package installieren
+RUN apt-get update && apt-get install -y maven git
+# Set working directory 
+WORKDIR /App
+# Clone project
+RUN git clone https://gitlab.com/peter.rutschmann/m347-ref-card-01-war.git
+# Set working directory 
+WORKDIR /App/m347-ref-card-01-war
+# Build the app
+RUN mvn clean package -Dmaven.test.skip=true
+
+# start with tomcat image latest or at least version 10
+FROM tomcat:latest
+# copy war form first image to second image
+COPY --from=build /App/m347-ref-card-01-war/target/*.war /usr/local/tomcat/webapps/ROOT.war
+# Expose Port
+EXPOSE 8080
+# Start tomcat
+CMD ["catalina.sh", "run"]
